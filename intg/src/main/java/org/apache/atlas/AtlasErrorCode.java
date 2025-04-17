@@ -183,6 +183,16 @@ public enum AtlasErrorCode {
     BLANK_NAME_ATTRIBUTE(400, "ATLAS-400-00-104", "Name Attribute can't be empty!"),
     BLANK_VALUE_ATTRIBUTE(400, "ATLAS-400-00-105", "Value Attribute can't be empty!"),
 
+    CUSTOM_AUDIT_FILTERS_NOT_ENABLED(400, "ATLAS-400-00-103", "Custom Audit Filters config: {0} is not enabled "),
+    INVALID_RULE_ACTION(400, "ATLAS-400-00-104", "Invalid action. Allowed values are ACCEPT or DISCARD"),
+    MISSING_ATTRIBUTE_NAME_IN_RULE_EXPR(400, "ATLAS-400-00-105", "attributeName is missing/null in specified criteria"),
+    MISSING_ATTRIBUTE_VALUE_IN_RULE_EXPR(400, "ATLAS-400-00-106", "attributeValue is missing/null for attributeName {0}"),
+    MISSING_CRITERIA_CONDITION(400, "ATLAS-400-00-107", "{0} is missing; specify condition along with criteria for multiple conditions"),
+    MISSING_MANDATORY_TYPENAME_IN_RULE_EXPR(400, "ATLAS-400-00-108", "typeName is required for every rule expression"),
+    MISSING_MANDATORY_OPERATOR_IN_RULE_EXPR_CRITERIA(400, "ATLAS-400-00-109", "operator is missing in specified criteria"),
+    INVALID_OPERATOR_ON_ATTRIBUTE(400, "ATLAS-400-00-110", "Operator {0} can not be applied on attribute {1}"),
+    DUPLICATE_TYPENAME_IN_RULE_EXPR(400, "ATLAS-400-00-111", "Duplicate value {0} found for typeName in same rule expression."),
+    DUPLICATE_CONDITION_IN_SAME_RULE_EXPR(400, "ATLAS-400-00-112", "Duplicate condition mentioned in same rule expression object."),
     UNAUTHORIZED_ACCESS(403, "ATLAS-403-00-001", "{0} is not authorized to perform {1}"),
 
     // All Not found enums go here
@@ -226,6 +236,8 @@ public enum AtlasErrorCode {
     GLOSSARY_IMPORT_FAILED(409, "ATLAS-409-00-011", "Glossary import failed"),
     METRICSSTAT_ALREADY_EXISTS(409, "ATLAS-409-00-012", "Metric Statistics already collected at {0}"),
     PENDING_TASKS_ALREADY_IN_PROGRESS(409, "ATLAS-409-00-013", "There are already {0} pending tasks in queue"),
+    RULE_NAME_ALREADY_EXISTS(409, "ATLAS-409-00-014", "Rule with given ruleName {0} already exists"),
+    RULE_EXPRESSION_ALREADY_EXISTS(409, "ATLAS-409-00-015", "Rule expression already exists for rule {0}"),
 
     // All internal errors go here
     INTERNAL_ERROR(500, "ATLAS-500-00-001", "Internal server error {0}"),
@@ -252,10 +264,10 @@ public enum AtlasErrorCode {
     FAILED_TO_UPDATE_GLOSSARY_TERM(500, "ATLAS-500-00-017", "Error occurred while updating glossary term: {0}"),
     NOTIFICATION_EXCEPTION(500, "ATLAS-500-00-018", "{0}");
 
-    private static final Logger LOG = LoggerFactory.getLogger(AtlasErrorCode.class);
-    private final        String errorCode;
-    private final        String errorMessage;
-    private final Response.Status httpCode;
+    private static final Logger          LOG = LoggerFactory.getLogger(AtlasErrorCode.class);
+    private final        String          errorCode;
+    private final        String          errorMessage;
+    private final        Response.Status httpCode;
 
     AtlasErrorCode(int httpCode, String errorCode, String errorMessage) {
         this.httpCode     = Response.Status.fromStatusCode(httpCode);
