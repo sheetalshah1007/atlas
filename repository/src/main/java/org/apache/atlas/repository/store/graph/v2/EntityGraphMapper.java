@@ -1572,8 +1572,7 @@ public class EntityGraphMapper {
     }
 
     private boolean shouldMapRelationshipAttributeUsingInferredType(Set<String> relationshipTypeNames, Object attrValue) {
-        return CollectionUtils.isEmpty(relationshipTypeNames)
-                || !isAttributeWithMultipleRelationshipTypes(relationshipTypeNames)
+        return !isAttributeWithMultipleRelationshipTypes(relationshipTypeNames)
                 || (!(attrValue instanceof Collection) && !(attrValue instanceof Map));
     }
 
