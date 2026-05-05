@@ -1507,14 +1507,14 @@ public class EntityGraphMapper {
             if (op.equals(CREATE)) {
                 for (String attrName : entityType.getRelationshipAttributes().keySet()) {
                     Object         attrValue    = entity.getRelationshipAttribute(attrName);
-                    mapRelationshipAttribute(entity, entityType, attrName, attrValue, vertex, op, context);
+                    mapRelationshipAttribute(entityType, attrName, attrValue, vertex, op, context);
                 }
             } else if (op.equals(UPDATE) || op.equals(PARTIAL_UPDATE)) {
                 // relationship attributes mapping
                 for (String attrName : entityType.getRelationshipAttributes().keySet()) {
                     if (entity.hasRelationshipAttribute(attrName)) {
                         Object         attrValue    = entity.getRelationshipAttribute(attrName);
-                        mapRelationshipAttribute(entity, entityType, attrName, attrValue, vertex, op, context);
+                        mapRelationshipAttribute(entityType, attrName, attrValue, vertex, op, context);
                     }
                 }
             }
@@ -1527,11 +1527,11 @@ public class EntityGraphMapper {
         LOG.debug("<== mapRelationshipAttributes({}, {})", op, entity.getTypeName());
     }
 
-    private void mapRelationshipAttribute(AtlasEntity entity, AtlasEntityType entityType, String attrName, Object attrValue, AtlasVertex vertex, EntityOperation op, EntityMutationContext context) throws AtlasBaseException {
-        LOG.debug("==> mapRelationshipAttribute({}, {})", attrName, entity.getTypeName());
+    private void mapRelationshipAttribute(AtlasEntityType entityType, String attrName, Object attrValue, AtlasVertex vertex, EntityOperation op, EntityMutationContext context) throws AtlasBaseException {
+        LOG.debug("==> mapRelationshipAttribute({}, {})", attrName, entityType.getTypeName());
         Set<String> relationshipTypeNames = entityType.getAttributeRelationshipTypes(attrName);
 
-        if (CollectionUtils.isEmpty(relationshipTypeNames)) {
+        if (shouldMapRelationshipAttributeUsingInferredType(relationshipTypeNames, attrValue)) {
             mapRelationshipAttributeUsingInferredType(entityType, attrName, attrValue, vertex, op, context);
             return;
         }
@@ -1560,16 +1560,21 @@ public class EntityGraphMapper {
                 }
             }
         } else if (attrValue instanceof Map) {
-            LOG.warn("mapRelationshipAttribute: attribute {} on {}: Map-valued relationship attribute is not supported", attrName, entity.getTypeName());
-        } else if (relationshipTypeNames.size() == 1) {
-            String         onlyRelationshipType = relationshipTypeNames.iterator().next();
-            AtlasAttribute attribute            = entityType.getRelationshipAttribute(attrName, onlyRelationshipType);
-            mapAttribute(attribute, attrValue, vertex, op, context);
-        } else {
-            mapRelationshipAttributeUsingInferredType(entityType, attrName, attrValue, vertex, op, context);
+            LOG.warn("mapRelationshipAttribute: attribute {} on {}: Map-valued relationship attribute is not supported; use a list or set of references",
+                    attrName, entityType.getTypeName());
         }
 
-        LOG.debug("<== mapRelationshipAttribute({}, {})", attrName, entity.getTypeName());
+        LOG.debug("<== mapRelationshipAttribute({}, {})", attrName, entityType.getTypeName());
+    }
+
+    private boolean isAttributeWithMultipleRelationshipTypes(Set<String> relationshipTypeNames) {
+        return CollectionUtils.isNotEmpty(relationshipTypeNames) && relationshipTypeNames.size() > 1;
+    }
+
+    private boolean shouldMapRelationshipAttributeUsingInferredType(Set<String> relationshipTypeNames, Object attrValue) {
+        return CollectionUtils.isEmpty(relationshipTypeNames)
+                || !isAttributeWithMultipleRelationshipTypes(relationshipTypeNames)
+                || (!(attrValue instanceof Collection) && !(attrValue instanceof Map));
     }
 
     private void mapRelationshipAttributeUsingInferredType(AtlasEntityType entityType, String attrName, Object attrValue, AtlasVertex vertex, EntityOperation op, EntityMutationContext context) throws AtlasBaseException {
@@ -1585,11 +1590,7 @@ public class EntityGraphMapper {
         for (Object element : relatedObjects) {
             String relationshipType = AtlasEntityUtil.getRelationshipType(element);
 
-            if (StringUtils.isEmpty(relationshipType) && relationshipTypeNames != null && relationshipTypeNames.size() == 1) {
-                relationshipType = relationshipTypeNames.iterator().next();
-            }
-
-            if (relationshipTypeNames == null || StringUtils.isEmpty(relationshipType) || !relationshipTypeNames.contains(relationshipType)) {
+            if (StringUtils.isEmpty(relationshipType) || !relationshipTypeNames.contains(relationshipType)) {
                 continue;
             }
 
