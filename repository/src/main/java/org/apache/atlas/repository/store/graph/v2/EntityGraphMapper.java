@@ -1532,7 +1532,10 @@ public class EntityGraphMapper {
         Set<String> relationshipTypeNames = entityType.getAttributeRelationshipTypes(attrName);
 
         if (shouldMapRelationshipAttributeUsingInferredType(relationshipTypeNames, attrValue)) {
-            mapRelationshipAttributeUsingInferredType(entityType, attrName, attrValue, vertex, op, context);
+            String relationType = relationshipTypeNames.size() == 1
+                    ? relationshipTypeNames.iterator().next()
+                    : AtlasEntityUtil.getRelationshipType(attrValue);
+            mapRelationshipAttributeUsingInferredType(entityType, attrName, attrValue, relationType, vertex, op, context);
             return;
         }
 
@@ -1576,9 +1579,8 @@ public class EntityGraphMapper {
                 || (!(attrValue instanceof Collection) && !(attrValue instanceof Map));
     }
 
-    private void mapRelationshipAttributeUsingInferredType(AtlasEntityType entityType, String attrName, Object attrValue, AtlasVertex vertex, EntityOperation op, EntityMutationContext context) throws AtlasBaseException {
-        String         relationType = AtlasEntityUtil.getRelationshipType(attrValue);
-        AtlasAttribute attribute    = entityType.getRelationshipAttribute(attrName, relationType);
+    private void mapRelationshipAttributeUsingInferredType(AtlasEntityType entityType, String attrName, Object attrValue, String relationType, AtlasVertex vertex, EntityOperation op, EntityMutationContext context) throws AtlasBaseException {
+        AtlasAttribute attribute = entityType.getRelationshipAttribute(attrName, relationType);
         mapAttribute(attribute, attrValue, vertex, op, context);
     }
 
@@ -1600,13 +1602,10 @@ public class EntityGraphMapper {
     }
 
     private Object createCollectionOfSameType(Object originalValue, List<Object> filteredElements) {
-        if (originalValue instanceof List) {
-            return filteredElements;
-        } else if (originalValue instanceof Set) {
+        if (originalValue instanceof Set) {
             return new HashSet<>(filteredElements);
-        } else {
-            return filteredElements;
         }
+        return filteredElements;
     }
 
     private void mapAttribute(AtlasAttribute attribute, Object attrValue, AtlasVertex vertex, EntityOperation op, EntityMutationContext context) throws AtlasBaseException {
